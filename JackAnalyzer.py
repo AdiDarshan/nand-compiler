@@ -14,17 +14,17 @@ from JackTokenizer import JackTokenizer
 
 def write_tokens(token_type, tokenizer, file):
     if token_type == "KEYWORD":
-        file.write(f"  <keyword> {tokenizer.keyword()} </keyword>\n")
+        file.write(f"<keyword> {tokenizer.keyword()} </keyword>\n")
     elif token_type == "SYMBOL":
-        file.write(f"  <symbol> {tokenizer.symbol()} </symbol>\n")
+        file.write(f"<symbol> {tokenizer.symbol()} </symbol>\n")
     elif token_type == "IDENTIFIER":
-        file.write(f"  <identifier> {tokenizer.identifier()} </identifier>\n")
+        file.write(f"<identifier> {tokenizer.identifier()} </identifier>\n")
     elif token_type == "INT_CONST":
         file.write(
-            f"  <integerConstant> {tokenizer.int_val()} </integerConstant>\n")
+            f"<integerConstant> {tokenizer.int_val()} </integerConstant>\n")
     elif token_type == "STRING_CONST":
         file.write(
-            f"  <stringConstant> {tokenizer.string_val()} </stringConstant>\n")
+            f"<stringConstant> {tokenizer.string_val()} </stringConstant>\n")
     else:
         raise ValueError(f"Unsupported token type: {token_type}")
 
@@ -42,7 +42,7 @@ def analyze_file(
         tokenizer.advance()
         token_type = tokenizer.token_type()
         write_tokens(token_type, tokenizer, output_file)
-    output_file.write('<tokens>\n')
+    output_file.write('</tokens>\n')
 
     # engine = CompilationEngine(tokenizer, output_file)
 
@@ -67,7 +67,7 @@ if "__main__" == __name__:
         filename, extension = os.path.splitext(input_path)
         if extension.lower() != ".jack":
             continue
-        output_path = filename + ".xml"
+        output_path = filename + "Try.xml"
         with open(input_path, 'r') as input_file, \
                 open(output_path, 'w') as output_file:
             analyze_file(input_file, output_file)

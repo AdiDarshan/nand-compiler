@@ -134,16 +134,6 @@ class JackTokenizer:
         # Combine all patterns into one pattern for matching
         self.elements_pattern = f"({keyword_pattern}|{symbol_pattern}|{integer_pattern}|{string_pattern}|{identifier_pattern})"
 
-        self.elements_pattern1 = r"""
-                \b(class|constructor|function|method|field|static|var|
-                int|char|boolean|void|true|false|null|this|let|do|if|
-                else|while|return)\b|\{|\}|\(|\)|\[|\]|\.|,|;|\+|\-|\*|\/|&|\||<|>|=|~|\^|# |
-                "[^"\n]*" |
-                \b\d+\b |
-                \b[A-Za-z_]\w*\b
-            """
-
-
         input_text = input_stream.read()
 
         # remove multi-line comments (/* ... */ and /** ... */)
@@ -151,7 +141,7 @@ class JackTokenizer:
 
         input_lines = input_text.splitlines()
 
-        lines = list()  # orders in file
+        lines = list()
         # remove inline remarks and strip
         for line in input_lines:
             line = line.strip().split("//", 1)[0].strip()
@@ -164,15 +154,12 @@ class JackTokenizer:
         self.tokens = self.tokenize_lines(lines)
         self.token_index = -1  # no token is currently chosen
 
-
     def tokenize_lines(self, lines: list) -> list:
         """Tokenizes all lines and returns a list of tokens.
 
         Returns:
             list: List of tokens extracted from the lines.
         """
-        token_regex = re.compile(self.elements_pattern, re.VERBOSE)
-
         tokens = []
         for line in lines:
             tokens.extend(self.process_line(line))
@@ -230,7 +217,7 @@ class JackTokenizer:
             "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO", 
             "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
         """
-        return self.KEYWORDS[self.tokens[self.token_index]]
+        return self.tokens[self.token_index]
 
     def symbol(self) -> str:
         """
@@ -241,7 +228,14 @@ class JackTokenizer:
             symbol: '{' | '}' | '(' | ')' | '[' | ']' | '.' | ',' | ';' | '+' | 
               '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
         """
-        return self.tokens[self.token_index]
+        current_symbol = self.tokens[self.token_index]
+        if current_symbol == '<':
+            return '&lt;'
+        elif current_symbol == '>':
+            return '&gt;'
+        elif current_symbol == '&':
+            return '&amp;'
+        return current_symbol
 
     def identifier(self) -> str:
         """
@@ -276,11 +270,7 @@ class JackTokenizer:
         """
         return self.tokens[self.token_index].strip('"')
 
-
     def process_line(self, line):
-        """Splits a line into words, then tokenizes each word."""
-
-        # Use re.finditer to match all tokens
         tokens = []
         for match in re.finditer(self.elements_pattern, line):
             token = match.group(0)
