@@ -7,13 +7,16 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 
+import JackTokenizer
+
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
     output stream.
     """
 
-    def __init__(self, input_stream: "JackTokenizer", output_stream) -> None:
+    def __init__(self, input_stream: JackTokenizer,
+                 output_stream: typing.TextIO) -> None:
         """
         Creates a new compilation engine with the given input and output. The
         next routine called must be compileClass()
@@ -23,12 +26,49 @@ class CompilationEngine:
         # Your code goes here!
         # Note that you can write to output_stream like so:
         # output_stream.write("Hello world! \n")
-        pass
+        self.tokenizer = input_stream
+        self.tokenizer.advance()  # now tokenizer set to first token
+        self.output_stream = output_stream
+
+    def writeTag(self, tag: str, content: str):
+        self.output_stream.write(f"<{tag}> {content} </{tag}\n")
+
+    def writeKeyword(self, content: str):
+        self.writeTag("keyword", content)
+
+    def writeSymbol(self, content: str):
+        self.writeTag("symbol", content)
+
+    def writeIdentifier(self, content: str):
+        self.writeTag("identifier", content)
+
+    def writeIntConst(self, content: str):
+        self.writeTag("integerConstant", content)
+
+    def writeStrConst(self, content: str):
+        self.writeTag("stringConstant", content)
 
     def compile_class(self) -> None:
         """Compiles a complete class."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<class>\n")
+
+        self.writeKeyword(self.tokenizer.keyword())  # 'class'
+        self.tokenizer.advance()
+        self.writeIdentifier(self.tokenizer.identifier())  # class name
+        self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol())  # {
+        self.tokenizer.advance()
+
+        while (self.tokenizer.token_type() == "KEYWORD" and
+               self.tokenizer.keyword() in {"static", "field"}):
+            self.compile_class_var_dec()
+
+        while (self.tokenizer.token_type() == "KEYWORD" and
+               self.tokenizer.keyword() in {"constructor", "function", "method"}):
+            self.compile_subroutine()
+
+        self.writeSymbol(self.tokenizer.symbol())  # }
+        self.output_stream.write("/class>")
 
     def compile_class_var_dec(self) -> None:
         """Compiles a static declaration or a field declaration."""

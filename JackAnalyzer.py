@@ -37,14 +37,15 @@ def analyze_file(
         output_file (typing.TextIO): writes all output to this file.
     """
     tokenizer = JackTokenizer(input_file)
-    output_file.write('<tokens>\n')
-    while tokenizer.has_more_tokens():
-        tokenizer.advance()
-        token_type = tokenizer.token_type()
-        write_tokens(token_type, tokenizer, output_file)
-    output_file.write('</tokens>\n')
+    engine = CompilationEngine(tokenizer, output_file)
 
-    # engine = CompilationEngine(tokenizer, output_file)
+    # output_file.write('<tokens>\n')
+    # while tokenizer.has_more_tokens():
+    #     tokenizer.advance()
+    #     token_type = tokenizer.token_type()
+    #     write_tokens(token_type, tokenizer, output_file)
+    # output_file.write('</tokens>\n')
+
 
 
 
