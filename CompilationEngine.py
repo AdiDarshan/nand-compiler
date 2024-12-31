@@ -64,7 +64,8 @@ class CompilationEngine:
             self.compile_class_var_dec()
 
         while (self.tokenizer.token_type() == "KEYWORD" and
-               self.tokenizer.keyword() in {"constructor", "function", "method"}):
+               self.tokenizer.keyword() in {"constructor", "function",
+                                            "method"}):
             self.compile_subroutine()
 
         self.writeSymbol(self.tokenizer.symbol())  # }
@@ -72,8 +73,25 @@ class CompilationEngine:
 
     def compile_class_var_dec(self) -> None:
         """Compiles a static declaration or a field declaration."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<classVarDec>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # 'field/static'
+        self.tokenizer.advance()
+        self.compile_type()  # type
+        self.tokenizer.advance()
+        self.writeIdentifier(self.tokenizer.identifier())  # varName
+        self.tokenizer.advance()
+
+        # handle additional variable names separated by commas
+        while (self.tokenizer.token_type() == "SYMBOL" and
+               self.tokenizer.symbol() == ','):
+            self.writeSymbol(self.tokenizer.symbol())  # ,
+            self.tokenizer.advance()
+            self.writeIdentifier(self.tokenizer.identifier())  # varName
+            self.tokenizer.advance()
+
+        self.writeSymbol(self.tokenizer.symbol())  # ;
+        self.tokenizer.advance()
+        self.output_stream.write("/classVarDec>\n")
 
     def compile_subroutine(self) -> None:
         """
@@ -81,15 +99,42 @@ class CompilationEngine:
         You can assume that classes with constructors have at least one field,
         you will understand why this is necessary in project 11.
         """
-        # Your code goes here!
-        pass
+        self.output_stream.write("<subroutineDec>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # 'constractor/function/method'
+        self.tokenizer.advance()
+        if self.tokenizer.token_type() == "KEYWORD" and self.tokenizer.keyword() == 'void':
+            self.writeKeyword(self.tokenizer.keyword())  # 'void'
+        else:
+            self.compile_type()  # type
+        self.tokenizer.advance()
+        self.writeIdentifier(self.tokenizer.identifier())  # subRoutineName
+        self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol)  # (
+        self.tokenizer.advance()
+        self.compile_parameter_list()  # parameter list
+        self.writeSymbol(self.tokenizer.symbol)  # )
+        self.tokenizer.advance()
+        self.output_stream.write("<subroutineBody>\n")
+        self.writeSymbol(self.tokenizer.symbol)  # {
+        self.tokenizer.advance()
+
+        # compile variable declarations
+        while self.tokenizer.token_type() == "KEYWORD" and self.tokenizer.keyword() == "var":
+            self.compile_var_dec()
+
+        self.compile_statements()  # routine body - dec
+        self.writeSymbol(self.tokenizer.symbol)  # }
+        self.tokenizer.advance()
+        self.output_stream.write("</subroutineBody>\n")
+
+        self.output_stream.write("</subroutineDec>\n")
 
     def compile_parameter_list(self) -> None:
         """Compiles a (possibly empty) parameter list, not including the 
         enclosing "()".
         """
-        # Your code goes here!
-        pass
+        self.output_stream.write("<subroutineDec>\n")
+        self.output_stream.write("</subroutineDec>\n")
 
     def compile_var_dec(self) -> None:
         """Compiles a var declaration."""
@@ -150,3 +195,10 @@ class CompilationEngine:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         # Your code goes here!
         pass
+
+    def compile_type(self):
+        if self.tokenizer.token_type() == "KEYWORD":
+            self.writeKeyword(self.tokenizer.keyword())  # 'int/char/boolean'
+        elif self.tokenizer.token_type() == "IDENTIFIER":
+            self.writeIdentifier(self.tokenizer.identifier())  # className
+
