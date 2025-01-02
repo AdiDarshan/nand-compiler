@@ -133,13 +133,47 @@ class CompilationEngine:
         """Compiles a (possibly empty) parameter list, not including the 
         enclosing "()".
         """
-        self.output_stream.write("<subroutineDec>\n")
-        self.output_stream.write("</subroutineDec>\n")
+        self.output_stream.write("<parameterList>\n")
+        if not (self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol()==")"):
+            self.compile_type()  # type
+            self.tokenizer.advance()
+            self.writeIdentifier(self.tokenizer.identifier())  # var name
+            self.tokenizer.advance()
+
+            # handle additional variable names separated by commas
+            while (self.tokenizer.token_type() == "SYMBOL" and
+                   self.tokenizer.symbol() == ','):
+                self.writeSymbol(self.tokenizer.symbol())  # ,
+                self.tokenizer.advance()
+                self.compile_type()  # type
+                self.tokenizer.advance()
+                self.writeIdentifier(self.tokenizer.identifier())  # var name
+                self.tokenizer.advance()
+
+        self.output_stream.write("</parameterList>\n")
 
     def compile_var_dec(self) -> None:
         """Compiles a var declaration."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<varDec>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # 'var'
+        self.tokenizer.advance()
+        self.compile_type()  # type
+        self.tokenizer.advance()
+        self.writeIdentifier(self.tokenizer.identifier())  # varName
+        self.tokenizer.advance()
+
+        # handle additional variable names separated by commas
+        while (self.tokenizer.token_type() == "SYMBOL" and
+               self.tokenizer.symbol() == ','):
+            self.writeSymbol(self.tokenizer.symbol())  # ,
+            self.tokenizer.advance()
+            self.writeIdentifier(self.tokenizer.identifier())  # varName
+            self.tokenizer.advance()
+
+        self.writeSymbol(self.tokenizer.symbol())  # ;
+        self.tokenizer.advance()
+
+        self.output_stream.write("</varDec>\n")
 
     def compile_statements(self) -> None:
         """Compiles a sequence of statements, not including the enclosing 
