@@ -15,6 +15,9 @@ class CompilationEngine:
     output stream.
     """
 
+    STATEMENT_PREFIX = {"while", "do", "return", "let", "if"}
+    OP = {'+', '-', '*', '/', '&', '|', '<', '>', '='}
+
     def __init__(self, input_stream: JackTokenizer,
                  output_stream: typing.TextIO) -> None:
         """
@@ -100,7 +103,8 @@ class CompilationEngine:
         you will understand why this is necessary in project 11.
         """
         self.output_stream.write("<subroutineDec>\n")
-        self.writeKeyword(self.tokenizer.keyword())  # 'constractor/function/method'
+        self.writeKeyword(
+            self.tokenizer.keyword())  # 'constractor/function/method'
         self.tokenizer.advance()
         if self.tokenizer.token_type() == "KEYWORD" and self.tokenizer.keyword() == 'void':
             self.writeKeyword(self.tokenizer.keyword())  # 'void'
@@ -134,7 +138,8 @@ class CompilationEngine:
         enclosing "()".
         """
         self.output_stream.write("<parameterList>\n")
-        if not (self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol()==")"):
+        if not (
+                self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() == ")"):
             self.compile_type()  # type
             self.tokenizer.advance()
             self.writeIdentifier(self.tokenizer.identifier())  # var name
@@ -179,38 +184,117 @@ class CompilationEngine:
         """Compiles a sequence of statements, not including the enclosing 
         "{}".
         """
-        # Your code goes here!
-        pass
+        self.output_stream.write("<statements>\n")
+        while (self.tokenizer.token_type() == "KEYWORD" and
+               self.tokenizer.keyword() in CompilationEngine.STATEMENT_PREFIX):
+            if self.tokenizer.keyword() == "do":
+                self.compile_do()
+            elif self.tokenizer.keyword() == "let":
+                self.compile_let()
+            elif self.tokenizer.keyword() == "while":
+                self.compile_while()
+            elif self.tokenizer.keyword() == "return":
+                self.compile_return()
+            elif self.tokenizer.keyword() == "if":
+                self.compile_if()
+            else:
+                raise ValueError(
+                    f"Unsupported token type: {self.tokenizer.keyword()}")
+        self.output_stream.write("</statements>\n")
 
     def compile_do(self) -> None:
         """Compiles a do statement."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<doStatement>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # do
+        self.tokenizer.advance()
+        self.()  # subroutineCall todo
+        self.writeSymbol(self.tokenizer.symbol())  # ;
+        self.tokenizer.advance()
+        self.output_stream.write("</doStatement>\n")
 
     def compile_let(self) -> None:
         """Compiles a let statement."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<letStatement>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # let
+        self.tokenizer.advance()
+        self.writeIdentifier(self.tokenizer.identifier())  # varName
+        self.tokenizer.advance()
+        if self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() == "[":
+            self.writeSymbol(self.tokenizer.symbol())  # [
+            self.tokenizer.advance()
+            self.compile_expression()  # expression
+            self.writeSymbol(self.tokenizer.symbol())  # ]
+            self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol())  # =
+        self.tokenizer.advance()
+        self.compile_expression()  # expression
+        self.writeSymbol(self.tokenizer.symbol())  # ;
+        self.tokenizer.advance()
+        self.output_stream.write("</letStatement>\n")
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<whileStatement>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # while
+        self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol())  # (
+        self.tokenizer.advance()
+        self.compile_expression()  # expression
+        self.writeSymbol(self.tokenizer.symbol())  # )
+        self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol())  # {
+        self.tokenizer.advance()
+        self.compile_statements()  # statements
+        self.writeSymbol(self.tokenizer.symbol())  # }
+        self.tokenizer.advance()
+        self.output_stream.write("</whileStatement>\n")
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
-        # Your code goes here!
-        pass
+        self.output_stream.write("<returnStatement>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # return
+        self.tokenizer.advance()
+        if not (
+                self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol == ";"):
+            self.compile_expression()
+        self.writeSymbol(self.tokenizer.symbol())  # ;
+        self.tokenizer.advance()
+        self.output_stream.write("</returnStatement>\n")
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
-        # Your code goes here!
-        pass
+        # - ifStatement: 'if' '(' expression ')' '{' statements '}' ('else' '{'
+        #                    statements '}')?
+        self.output_stream.write("<ifStatement>\n")
+        self.writeKeyword(self.tokenizer.keyword())  # if
+        self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol())  # (
+        self.tokenizer.advance()
+        self.compile_expression()
+        self.writeSymbol(self.tokenizer.symbol())  # )
+        self.tokenizer.advance()
+        self.writeSymbol(self.tokenizer.symbol())  # {
+        self.tokenizer.advance()
+        self.compile_statements()
+        self.writeSymbol(self.tokenizer.symbol())  # }
+        self.tokenizer.advance()
+        if self.tokenizer.token_type() == "KEYWORD" and self.tokenizer.keyword() == "else":
+            self.writeKeyword(self.tokenizer.keyword())  # else
+            self.tokenizer.advance()
+            self.writeSymbol(self.tokenizer.symbol())  # {
+            self.tokenizer.advance()
+            self.compile_statements()
+            self.writeSymbol(self.tokenizer.symbol())  # }
+            self.tokenizer.advance()
+        self.output_stream.write("</ifStatement>\n")
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
-        # Your code goes here!
-        pass
+        self.compile_term()
+        while self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() in CompilationEngine.OP:
+            self.writeSymbol(self.tokenizer.symbol())  # op
+            self.tokenizer.advance()
+            self.compile_term()
 
     def compile_term(self) -> None:
         """Compiles a term. 
@@ -222,12 +306,12 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        # Your code goes here!
+        # Your code goes here! todo
         pass
 
     def compile_expression_list(self) -> None:
         """Compiles a (possibly empty) comma-separated list of expressions."""
-        # Your code goes here!
+        #     - expressionList: (expression (',' expression)* )? todo
         pass
 
     def compile_type(self):
@@ -235,4 +319,3 @@ class CompilationEngine:
             self.writeKeyword(self.tokenizer.keyword())  # 'int/char/boolean'
         elif self.tokenizer.token_type() == "IDENTIFIER":
             self.writeIdentifier(self.tokenizer.identifier())  # className
-
