@@ -18,7 +18,7 @@ class CompilationEngine:
     UNARY_OP = {'-', '~', '^', '#'}
     KEYWORD_CONSTANTS = {'true', 'false', 'null', 'this'}
     STATEMENT_PREFIX = {"while", "do", "return", "let", "if"}
-    OP = {'+', '-', '*', '/', '&', '|', '<', '>', '='}
+    OP = {'+', '-', '*', '/', '&amp;', '|', '&gt;', '&lt;', '='}
 
     def __init__(self, input_stream: JackTokenizer,
                  output_stream: typing.TextIO) -> None:
@@ -294,12 +294,14 @@ class CompilationEngine:
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
+        self.output_stream.write("<expression>\n")
         self.compile_term()
         while (self.tokenizer.token_type() == "SYMBOL" and
                self.tokenizer.symbol() in CompilationEngine.OP):
             self.writeSymbol(self.tokenizer.symbol())  # op
             self.tokenizer.advance()
             self.compile_term()
+        self.output_stream.write("</expression>\n")
 
     def compile_term(self) -> None:
         """Compiles a term.
@@ -311,6 +313,7 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
+        self.output_stream.write("<term>\n")
         if self.tokenizer.token_type() == "INT_CONST":
             self.writeIntConst(self.tokenizer.int_val())
             self.tokenizer.advance()
@@ -354,19 +357,22 @@ class CompilationEngine:
         else:
             raise ValueError(
                 f"Unexpected token: {self.tokenizer.token_type()}")
+        self.output_stream.write("</term>\n")
 
     def compile_expression_list(self) -> None:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         #     - expressionList: (expression (',' expression)* )? todo
         #  check if empty
-        if (not self.tokenizer.token_type() == "SYMBOL" and
-                self.tokenizer.symbol() == ")"):
+        self.output_stream.write("<expressionList>\n")
+        if (not (self.tokenizer.token_type() == "SYMBOL" and
+                 self.tokenizer.symbol() == ")")):
             self.compile_expression()
             while (self.tokenizer.token_type() == "SYMBOL" and
                    self.tokenizer.symbol() == ","):
                 self.writeSymbol(self.tokenizer.symbol())  # ,
                 self.tokenizer.advance()
                 self.compile_expression()
+        self.output_stream.write("</expressionList>\n")
 
     def compile_type(self):
         if self.tokenizer.token_type() == "KEYWORD":
@@ -395,5 +401,3 @@ class CompilationEngine:
         else:
             raise ValueError(
                 f"Unexpected token: {self.tokenizer.symbol()}")
-
-
