@@ -15,6 +15,8 @@ class CompilationEngine:
     output stream.
     """
 
+    UNARY_OP = {'-', '~', '^', '#'}
+    KEYWORD_CONSTANTS = {'true', 'false', 'null', 'this'}
     STATEMENT_PREFIX = {"while", "do", "return", "let", "if"}
     OP = {'+', '-', '*', '/', '&', '|', '<', '>', '='}
 
@@ -207,7 +209,9 @@ class CompilationEngine:
         self.output_stream.write("<doStatement>\n")
         self.writeKeyword(self.tokenizer.keyword())  # do
         self.tokenizer.advance()
-        self.()  # subroutineCall todo
+        var_name = self.tokenizer.identifier()
+        self.tokenizer.advance()
+        self.compile_subroutine_call(var_name)  # subroutineCall
         self.writeSymbol(self.tokenizer.symbol())  # ;
         self.tokenizer.advance()
         self.output_stream.write("</doStatement>\n")
@@ -291,7 +295,8 @@ class CompilationEngine:
     def compile_expression(self) -> None:
         """Compiles an expression."""
         self.compile_term()
-        while self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() in CompilationEngine.OP:
+        while (self.tokenizer.token_type() == "SYMBOL" and
+               self.tokenizer.symbol() in CompilationEngine.OP):
             self.writeSymbol(self.tokenizer.symbol())  # op
             self.tokenizer.advance()
             self.compile_term()
@@ -306,16 +311,88 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        # Your code goes here! todo
-        pass
+        if self.tokenizer.token_type() == "INT_CONST":
+            self.writeIntConst(self.tokenizer.int_val())
+            self.tokenizer.advance()
+        elif self.tokenizer.token_type() == "STRING_CONST":
+            self.writeStrConst(self.tokenizer.string_val())
+            self.tokenizer.advance()
+        elif (self.tokenizer.token_type() == "KEYWORD" and
+              self.tokenizer.keyword() in CompilationEngine.KEYWORD_CONSTANTS):
+            self.writeKeyword(self.tokenizer.keyword())
+            self.tokenizer.advance()
+        elif self.tokenizer.token_type() == "IDENTIFIER":
+            var_name = self.tokenizer.identifier()
+            self.tokenizer.advance()
+            if self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() == "[":
+                # array
+                self.writeIdentifier(var_name)
+                self.writeSymbol(self.tokenizer.symbol())  # [
+                self.tokenizer.advance()
+                self.compile_expression()
+                self.writeSymbol(self.tokenizer.symbol())  # ]
+                self.tokenizer.advance()
+            elif (self.tokenizer.token_type() == "SYMBOL" and
+                  self.tokenizer.symbol() in ("(", ".")):
+                # subroutineCall:
+                self.compile_subroutine_call(var_name)
+            else:
+                # Simple variable
+                self.writeIdentifier(var_name)
+        elif self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() == "(":
+            # ( expression )
+            self.writeSymbol(self.tokenizer.symbol())  # (
+            self.tokenizer.advance()
+            self.compile_expression()
+            self.writeSymbol(self.tokenizer.symbol())  # )
+            self.tokenizer.advance()
+        elif self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol() in CompilationEngine.UNARY_OP:
+            # Handle unaryOp term
+            self.writeSymbol(self.tokenizer.symbol())
+            self.tokenizer.advance()
+            self.compile_term()
+        else:
+            raise ValueError(
+                f"Unexpected token: {self.tokenizer.token_type()}")
 
     def compile_expression_list(self) -> None:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         #     - expressionList: (expression (',' expression)* )? todo
-        pass
+        #  check if empty
+        if (not (self.tokenizer.token_type() == "SYMBOL" and
+                self.tokenizer.symbol() == ")")):
+            self.compile_expression()
+            while (self.tokenizer.token_type() == "SYMBOL" and
+                   self.tokenizer.symbol() == ","):
+                self.writeSymbol(self.tokenizer.symbol())  # ,
+                self.tokenizer.advance()
+                self.compile_expression()
 
     def compile_type(self):
         if self.tokenizer.token_type() == "KEYWORD":
             self.writeKeyword(self.tokenizer.keyword())  # 'int/char/boolean'
         elif self.tokenizer.token_type() == "IDENTIFIER":
             self.writeIdentifier(self.tokenizer.identifier())  # className
+
+    def compile_subroutine_call(self, identifier):
+        self.writeIdentifier(identifier)
+        if self.tokenizer.symbol() == "(":
+            self.writeSymbol(self.tokenizer.symbol())  # (
+            self.tokenizer.advance()
+            self.compile_expression_list()
+            self.writeSymbol(self.tokenizer.symbol())  # )
+            self.tokenizer.advance()
+        elif self.tokenizer.symbol() == ".":
+            self.writeSymbol(self.tokenizer.symbol())  # .
+            self.tokenizer.advance()
+            self.writeIdentifier(self.tokenizer.identifier())  # subroutineName
+            self.tokenizer.advance()
+            self.writeSymbol(self.tokenizer.symbol())  # (
+            self.tokenizer.advance()
+            self.compile_expression_list()
+            self.writeSymbol(self.tokenizer.symbol())  # )
+            self.tokenizer.advance()
+        else:
+            raise ValueError(
+                f"Unexpected token: {self.tokenizer.symbol()}")
+
