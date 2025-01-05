@@ -28,6 +28,7 @@ def write_tokens(token_type, tokenizer, file):
     else:
         raise ValueError(f"Unsupported token type: {token_type}")
 
+
 def analyze_file(
         input_file: typing.TextIO, output_file: typing.TextIO) -> None:
     """Analyzes a single file.
@@ -38,7 +39,7 @@ def analyze_file(
     """
     tokenizer = JackTokenizer(input_file)
     engine = CompilationEngine(tokenizer, output_file)
-
+    engine.compile_class()
     # output_file.write('<tokens>\n')
     # while tokenizer.has_more_tokens():
     #     tokenizer.advance()
@@ -68,7 +69,7 @@ if "__main__" == __name__:
         filename, extension = os.path.splitext(input_path)
         if extension.lower() != ".jack":
             continue
-        output_path = filename + "Try.xml"
+        output_path = filename + "Q.xml"
         with open(input_path, 'r') as input_file, \
                 open(output_path, 'w') as output_file:
             analyze_file(input_file, output_file)

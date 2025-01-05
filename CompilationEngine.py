@@ -36,7 +36,7 @@ class CompilationEngine:
         self.output_stream = output_stream
 
     def writeTag(self, tag: str, content: str):
-        self.output_stream.write(f"<{tag}> {content} </{tag}\n")
+        self.output_stream.write(f"<{tag}> {content} </{tag}>\n")
 
     def writeKeyword(self, content: str):
         self.writeTag("keyword", content)
@@ -74,7 +74,7 @@ class CompilationEngine:
             self.compile_subroutine()
 
         self.writeSymbol(self.tokenizer.symbol())  # }
-        self.output_stream.write("/class>")
+        self.output_stream.write("</class>")
 
     def compile_class_var_dec(self) -> None:
         """Compiles a static declaration or a field declaration."""
@@ -96,7 +96,7 @@ class CompilationEngine:
 
         self.writeSymbol(self.tokenizer.symbol())  # ;
         self.tokenizer.advance()
-        self.output_stream.write("/classVarDec>\n")
+        self.output_stream.write("</classVarDec>\n")
 
     def compile_subroutine(self) -> None:
         """
@@ -115,13 +115,13 @@ class CompilationEngine:
         self.tokenizer.advance()
         self.writeIdentifier(self.tokenizer.identifier())  # subRoutineName
         self.tokenizer.advance()
-        self.writeSymbol(self.tokenizer.symbol)  # (
+        self.writeSymbol(self.tokenizer.symbol())  # (
         self.tokenizer.advance()
         self.compile_parameter_list()  # parameter list
-        self.writeSymbol(self.tokenizer.symbol)  # )
+        self.writeSymbol(self.tokenizer.symbol())  # )
         self.tokenizer.advance()
         self.output_stream.write("<subroutineBody>\n")
-        self.writeSymbol(self.tokenizer.symbol)  # {
+        self.writeSymbol(self.tokenizer.symbol())  # {
         self.tokenizer.advance()
 
         # compile variable declarations
@@ -129,14 +129,14 @@ class CompilationEngine:
             self.compile_var_dec()
 
         self.compile_statements()  # routine body - dec
-        self.writeSymbol(self.tokenizer.symbol)  # }
+        self.writeSymbol(self.tokenizer.symbol())  # }
         self.tokenizer.advance()
         self.output_stream.write("</subroutineBody>\n")
 
         self.output_stream.write("</subroutineDec>\n")
 
     def compile_parameter_list(self) -> None:
-        """Compiles a (possibly empty) parameter list, not including the 
+        """Compiles a (possibly empty) parameter list, not including the
         enclosing "()".
         """
         self.output_stream.write("<parameterList>\n")
@@ -183,7 +183,7 @@ class CompilationEngine:
         self.output_stream.write("</varDec>\n")
 
     def compile_statements(self) -> None:
-        """Compiles a sequence of statements, not including the enclosing 
+        """Compiles a sequence of statements, not including the enclosing
         "{}".
         """
         self.output_stream.write("<statements>\n")
@@ -258,8 +258,8 @@ class CompilationEngine:
         self.output_stream.write("<returnStatement>\n")
         self.writeKeyword(self.tokenizer.keyword())  # return
         self.tokenizer.advance()
-        if not (
-                self.tokenizer.token_type() == "SYMBOL" and self.tokenizer.symbol == ";"):
+        if not (self.tokenizer.token_type() == "SYMBOL" and
+                self.tokenizer.symbol() == ";"):
             self.compile_expression()
         self.writeSymbol(self.tokenizer.symbol())  # ;
         self.tokenizer.advance()
@@ -302,7 +302,7 @@ class CompilationEngine:
             self.compile_term()
 
     def compile_term(self) -> None:
-        """Compiles a term. 
+        """Compiles a term.
         This routine is faced with a slight difficulty when
         trying to decide between some of the alternative parsing rules.
         Specifically, if the current token is an identifier, the routing must
@@ -359,8 +359,8 @@ class CompilationEngine:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         #     - expressionList: (expression (',' expression)* )? todo
         #  check if empty
-        if (not (self.tokenizer.token_type() == "SYMBOL" and
-                self.tokenizer.symbol() == ")")):
+        if (not self.tokenizer.token_type() == "SYMBOL" and
+                self.tokenizer.symbol() == ")"):
             self.compile_expression()
             while (self.tokenizer.token_type() == "SYMBOL" and
                    self.tokenizer.symbol() == ","):
@@ -395,4 +395,5 @@ class CompilationEngine:
         else:
             raise ValueError(
                 f"Unexpected token: {self.tokenizer.symbol()}")
+
 
